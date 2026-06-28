@@ -1,0 +1,339 @@
+# AC1: Table count applied with 0 DDL errors
+# Proves all 100 CREATE TABLE statements apply across 3 datasets with 0 errors.
+# Pattern: schema_conformance (target-only — no source_setup)
+# Pass rule: 100/100 tables created, 0 DDL errors.
+name: ac1_ddl_apply
+
+connections:
+  source: { engine: impala }
+  target: { engine: bigquery }
+
+migration:
+  dataset_map:
+    nbcs_staging: dmt_build_staging
+    nbcs_ods: dmt_build_ods
+    nbcs_dm: dmt_build_dm
+  steps:
+    - { kind: ddl, dataset: dmt_build_staging, sql: ddl/nbcs_staging.sql }
+    - { kind: ddl, dataset: dmt_build_ods,     sql: ddl/nbcs_ods.sql }
+    - { kind: ddl, dataset: dmt_build_dm,      sql: ddl/nbcs_dm.sql }
+
+suites:
+
+  - pattern: schema_conformance
+    id: ac1-staging-table-count
+    target_dataset: dmt_build_staging
+    expect_table_count: 45
+    tables:
+      - table: stg_crm_client
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: stg_crm_client_contact
+        columns:
+          - { name: contact_id, type: INT64 }
+      - table: stg_crm_program
+        columns:
+          - { name: program_id, type: INT64 }
+      - table: stg_crm_contract
+        columns:
+          - { name: contract_id, type: INT64 }
+      - table: stg_crm_contract_line
+        columns:
+          - { name: contract_line_id, type: INT64 }
+      - table: stg_crm_sla_target
+        columns:
+          - { name: sla_target_id, type: INT64 }
+      - table: stg_hr_agent
+        columns:
+          - { name: agent_id, type: INT64 }
+      - table: stg_hr_org_unit
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: stg_hr_employment_event
+        columns:
+          - { name: event_id, type: INT64 }
+      - table: stg_hr_skill
+        columns:
+          - { name: skill_id, type: INT64 }
+      - table: stg_hr_agent_skill
+        columns:
+          - { name: agent_skill_id, type: INT64 }
+      - table: stg_wfm_shift
+        columns:
+          - { name: shift_id, type: INT64 }
+      - table: stg_wfm_schedule
+        columns:
+          - { name: schedule_id, type: INT64 }
+      - table: stg_wfm_adherence_event
+        columns:
+          - { name: adherence_event_id, type: INT64 }
+      - table: stg_wfm_forecast
+        columns:
+          - { name: forecast_id, type: INT64 }
+      - table: stg_wfm_timeoff_request
+        columns:
+          - { name: timeoff_id, type: INT64 }
+      - table: stg_tel_call
+        columns:
+          - { name: call_id, type: INT64 }
+      - table: stg_tel_call_segment
+        columns:
+          - { name: segment_id, type: INT64 }
+      - table: stg_tel_queue
+        columns:
+          - { name: queue_id, type: INT64 }
+      - table: stg_tel_agent_state_event
+        columns:
+          - { name: state_event_id, type: INT64 }
+      - table: stg_tel_disposition_code
+        columns:
+          - { name: disposition_code, type: STRING }
+      - table: stg_tkt_ticket
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: stg_tkt_ticket_event
+        columns:
+          - { name: ticket_event_id, type: INT64 }
+      - table: stg_tkt_category
+        columns:
+          - { name: category_id, type: INT64 }
+      - table: stg_fin_invoice
+        columns:
+          - { name: invoice_id, type: INT64 }
+      - table: stg_fin_invoice_line
+        columns:
+          - { name: invoice_line_id, type: INT64 }
+      - table: stg_fin_rate_card
+        columns:
+          - { name: rate_card_id, type: INT64 }
+      - table: stg_fin_timesheet_delta
+        columns:
+          - { name: timesheet_id, type: INT64 }
+      - table: stg_fin_payroll_adj_delta
+        columns:
+          - { name: adjustment_id, type: INT64 }
+      - table: stg_crm_sla_credit_delta
+        columns:
+          - { name: sla_credit_id, type: INT64 }
+      - table: stg_tel_callback_request_delta
+        columns:
+          - { name: callback_id, type: INT64 }
+      - table: stg_wfm_shift_swap_delta
+        columns:
+          - { name: swap_id, type: INT64 }
+      - table: stg_tkt_worklog_delta
+        columns:
+          - { name: worklog_id, type: INT64 }
+      - table: stg_hr_attrition_event_delta
+        columns:
+          - { name: attrition_event_id, type: INT64 }
+      - table: stg_fin_rate_card_change_delta
+        columns:
+          - { name: rate_change_id, type: INT64 }
+      - table: stg_file_interaction_export
+        columns:
+          - { name: interaction_ref, type: STRING }
+      - table: stg_file_survey_csat
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: stg_file_qa_forms
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: stg_file_ivr_logs
+        columns:
+          - { name: event_ms, type: INT64 }
+      - table: stg_file_chat_transcripts
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: stg_file_roster
+        columns:
+          - { name: employee_no, type: STRING }
+      - table: stg_file_telco_invoice
+        columns:
+          - { name: telco_invoice_id, type: STRING }
+      - table: stg_file_dialer_result
+        columns:
+          - { name: attempt_id, type: STRING }
+      - table: stg_file_email_interaction
+        columns:
+          - { name: email_ref, type: STRING }
+      - table: stg_file_speech_analytics
+        columns:
+          - { name: recording_id, type: STRING }
+
+  - pattern: schema_conformance
+    id: ac1-ods-table-count
+    target_dataset: dmt_build_ods
+    expect_table_count: 30
+    tables:
+      - table: ods_program
+        columns:
+          - { name: program_id, type: INT64 }
+      - table: ods_contract
+        columns:
+          - { name: contract_id, type: INT64 }
+      - table: ods_contract_line
+        columns:
+          - { name: contract_line_id, type: INT64 }
+      - table: ods_org_unit
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: ods_queue
+        columns:
+          - { name: queue_id, type: INT64 }
+      - table: ods_schedule
+        columns:
+          - { name: schedule_id, type: INT64 }
+      - table: ods_adherence_event
+        columns:
+          - { name: adherence_event_id, type: INT64 }
+      - table: ods_call
+        columns:
+          - { name: call_id, type: INT64 }
+      - table: ods_ivr_session
+        columns:
+          - { name: session_ref, type: STRING }
+      - table: ods_chat_session
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: ods_email_interaction
+        columns:
+          - { name: email_ref, type: STRING }
+      - table: ods_survey_response
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: ods_qa_evaluation
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: ods_interaction
+        columns:
+          - { name: interaction_id, type: STRING }
+      - table: ods_dialer_attempt
+        columns:
+          - { name: attempt_id, type: STRING }
+      - table: ods_timesheet
+        columns:
+          - { name: timesheet_id, type: INT64 }
+      - table: ods_payroll_adjustment
+        columns:
+          - { name: adjustment_id, type: INT64 }
+      - table: ods_sla_credit
+        columns:
+          - { name: sla_credit_id, type: INT64 }
+      - table: ods_callback_request
+        columns:
+          - { name: callback_id, type: INT64 }
+      - table: ods_shift_swap
+        columns:
+          - { name: swap_id, type: INT64 }
+      - table: ods_ticket_worklog
+        columns:
+          - { name: worklog_id, type: INT64 }
+      - table: ods_attrition_event
+        columns:
+          - { name: attrition_event_id, type: INT64 }
+      - table: ods_rate_card
+        columns:
+          - { name: rate_card_id, type: INT64 }
+      - table: ods_agent_scd2
+        columns:
+          - { name: agent_history_id, type: STRING }
+      - table: ods_agent_skill_scd2
+        columns:
+          - { name: agent_skill_history_id, type: STRING }
+      - table: ods_agent_assignment_scd2
+        columns:
+          - { name: assignment_history_id, type: STRING }
+      - table: ods_client_acid
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: ods_agent_acid
+        columns:
+          - { name: agent_id, type: INT64 }
+      - table: ods_ticket_acid
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: ods_invoice_acid
+        columns:
+          - { name: invoice_id, type: INT64 }
+
+  - pattern: schema_conformance
+    id: ac1-dm-table-count
+    target_dataset: dmt_build_dm
+    expect_table_count: 25
+    tables:
+      - table: dim_date
+        columns:
+          - { name: date_key, type: INT64 }
+      - table: dim_agent
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: dim_client
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: dim_program
+        columns:
+          - { name: program_sk, type: INT64 }
+      - table: dim_queue
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: dim_site
+        columns:
+          - { name: site_sk, type: INT64 }
+      - table: dim_shift
+        columns:
+          - { name: shift_sk, type: INT64 }
+      - table: dim_org
+        columns:
+          - { name: org_sk, type: INT64 }
+      - table: dim_disposition
+        columns:
+          - { name: disposition_sk, type: INT64 }
+      - table: fact_interaction
+        columns:
+          - { name: interaction_id, type: STRING }
+      - table: fact_agent_activity
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: fact_queue_interval
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: fact_csat_survey
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: fact_qa_evaluation
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: fact_billing_line
+        columns:
+          - { name: invoice_line_id, type: INT64 }
+      - table: fact_adherence_daily
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: fact_ticket
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: fact_ivr_path
+        columns:
+          - { name: session_ref, type: STRING }
+      - table: agg_agent_daily
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: agg_agent_weekly
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: agg_program_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_queue_hourly
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: agg_csat_rollup_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_billing_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_site_daily
+        columns:
+          - { name: site_code, type: STRING }

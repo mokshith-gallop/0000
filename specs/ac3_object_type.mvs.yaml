@@ -1,0 +1,445 @@
+# AC3: Object-type fidelity
+# Proves every source table lands as BigQuery BASE TABLE; no source table is
+# silently created as a view. The 15 source views are out-of-scope and must
+# not appear as tables in nbcs_dm.
+# Pattern: schema_conformance (target-only — no source_setup)
+# Pass rule: 100/100 source tables landed as BASE TABLE; 0 view-to-table flips.
+name: ac3_object_type
+
+connections:
+  source: { engine: impala }
+  target: { engine: bigquery }
+
+migration:
+  dataset_map:
+    nbcs_staging: dmt_build_staging
+    nbcs_ods: dmt_build_ods
+    nbcs_dm: dmt_build_dm
+  steps:
+    - { kind: ddl, dataset: dmt_build_staging, sql: ddl/nbcs_staging.sql }
+    - { kind: ddl, dataset: dmt_build_ods,     sql: ddl/nbcs_ods.sql }
+    - { kind: ddl, dataset: dmt_build_dm,      sql: ddl/nbcs_dm.sql }
+
+suites:
+
+  # staging: 45 tables, all must be BASE TABLE
+  - pattern: schema_conformance
+    id: ac3-staging-object-type
+    target_dataset: dmt_build_staging
+    expect_table_count: 45
+    tables:
+      - table: stg_crm_client
+        expect_object_type: TABLE
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: stg_crm_client_contact
+        expect_object_type: TABLE
+        columns:
+          - { name: contact_id, type: INT64 }
+      - table: stg_crm_program
+        expect_object_type: TABLE
+        columns:
+          - { name: program_id, type: INT64 }
+      - table: stg_crm_contract
+        expect_object_type: TABLE
+        columns:
+          - { name: contract_id, type: INT64 }
+      - table: stg_crm_contract_line
+        expect_object_type: TABLE
+        columns:
+          - { name: contract_line_id, type: INT64 }
+      - table: stg_crm_sla_target
+        expect_object_type: TABLE
+        columns:
+          - { name: sla_target_id, type: INT64 }
+      - table: stg_hr_agent
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_id, type: INT64 }
+      - table: stg_hr_org_unit
+        expect_object_type: TABLE
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: stg_hr_employment_event
+        expect_object_type: TABLE
+        columns:
+          - { name: event_id, type: INT64 }
+      - table: stg_hr_skill
+        expect_object_type: TABLE
+        columns:
+          - { name: skill_id, type: INT64 }
+      - table: stg_hr_agent_skill
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_skill_id, type: INT64 }
+      - table: stg_wfm_shift
+        expect_object_type: TABLE
+        columns:
+          - { name: shift_id, type: INT64 }
+      - table: stg_wfm_schedule
+        expect_object_type: TABLE
+        columns:
+          - { name: schedule_id, type: INT64 }
+      - table: stg_wfm_adherence_event
+        expect_object_type: TABLE
+        columns:
+          - { name: adherence_event_id, type: INT64 }
+      - table: stg_wfm_forecast
+        expect_object_type: TABLE
+        columns:
+          - { name: forecast_id, type: INT64 }
+      - table: stg_wfm_timeoff_request
+        expect_object_type: TABLE
+        columns:
+          - { name: timeoff_id, type: INT64 }
+      - table: stg_tel_call
+        expect_object_type: TABLE
+        columns:
+          - { name: call_id, type: INT64 }
+      - table: stg_tel_call_segment
+        expect_object_type: TABLE
+        columns:
+          - { name: segment_id, type: INT64 }
+      - table: stg_tel_queue
+        expect_object_type: TABLE
+        columns:
+          - { name: queue_id, type: INT64 }
+      - table: stg_tel_agent_state_event
+        expect_object_type: TABLE
+        columns:
+          - { name: state_event_id, type: INT64 }
+      - table: stg_tel_disposition_code
+        expect_object_type: TABLE
+        columns:
+          - { name: disposition_code, type: STRING }
+      - table: stg_tkt_ticket
+        expect_object_type: TABLE
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: stg_tkt_ticket_event
+        expect_object_type: TABLE
+        columns:
+          - { name: ticket_event_id, type: INT64 }
+      - table: stg_tkt_category
+        expect_object_type: TABLE
+        columns:
+          - { name: category_id, type: INT64 }
+      - table: stg_fin_invoice
+        expect_object_type: TABLE
+        columns:
+          - { name: invoice_id, type: INT64 }
+      - table: stg_fin_invoice_line
+        expect_object_type: TABLE
+        columns:
+          - { name: invoice_line_id, type: INT64 }
+      - table: stg_fin_rate_card
+        expect_object_type: TABLE
+        columns:
+          - { name: rate_card_id, type: INT64 }
+      - table: stg_fin_timesheet_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: timesheet_id, type: INT64 }
+      - table: stg_fin_payroll_adj_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: adjustment_id, type: INT64 }
+      - table: stg_crm_sla_credit_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: sla_credit_id, type: INT64 }
+      - table: stg_tel_callback_request_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: callback_id, type: INT64 }
+      - table: stg_wfm_shift_swap_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: swap_id, type: INT64 }
+      - table: stg_tkt_worklog_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: worklog_id, type: INT64 }
+      - table: stg_hr_attrition_event_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: attrition_event_id, type: INT64 }
+      - table: stg_fin_rate_card_change_delta
+        expect_object_type: TABLE
+        columns:
+          - { name: rate_change_id, type: INT64 }
+      - table: stg_file_interaction_export
+        expect_object_type: TABLE
+        columns:
+          - { name: interaction_ref, type: STRING }
+      - table: stg_file_survey_csat
+        expect_object_type: TABLE
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: stg_file_qa_forms
+        expect_object_type: TABLE
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: stg_file_ivr_logs
+        expect_object_type: TABLE
+        columns:
+          - { name: event_ms, type: INT64 }
+      - table: stg_file_chat_transcripts
+        expect_object_type: TABLE
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: stg_file_roster
+        expect_object_type: TABLE
+        columns:
+          - { name: employee_no, type: STRING }
+      - table: stg_file_telco_invoice
+        expect_object_type: TABLE
+        columns:
+          - { name: telco_invoice_id, type: STRING }
+      - table: stg_file_dialer_result
+        expect_object_type: TABLE
+        columns:
+          - { name: attempt_id, type: STRING }
+      - table: stg_file_email_interaction
+        expect_object_type: TABLE
+        columns:
+          - { name: email_ref, type: STRING }
+      - table: stg_file_speech_analytics
+        expect_object_type: TABLE
+        columns:
+          - { name: recording_id, type: STRING }
+
+  # ods: 30 tables, all must be BASE TABLE
+  - pattern: schema_conformance
+    id: ac3-ods-object-type
+    target_dataset: dmt_build_ods
+    expect_table_count: 30
+    tables:
+      - table: ods_program
+        expect_object_type: TABLE
+        columns:
+          - { name: program_id, type: INT64 }
+      - table: ods_contract
+        expect_object_type: TABLE
+        columns:
+          - { name: contract_id, type: INT64 }
+      - table: ods_contract_line
+        expect_object_type: TABLE
+        columns:
+          - { name: contract_line_id, type: INT64 }
+      - table: ods_org_unit
+        expect_object_type: TABLE
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: ods_queue
+        expect_object_type: TABLE
+        columns:
+          - { name: queue_id, type: INT64 }
+      - table: ods_schedule
+        expect_object_type: TABLE
+        columns:
+          - { name: schedule_id, type: INT64 }
+      - table: ods_adherence_event
+        expect_object_type: TABLE
+        columns:
+          - { name: adherence_event_id, type: INT64 }
+      - table: ods_call
+        expect_object_type: TABLE
+        columns:
+          - { name: call_id, type: INT64 }
+      - table: ods_ivr_session
+        expect_object_type: TABLE
+        columns:
+          - { name: session_ref, type: STRING }
+      - table: ods_chat_session
+        expect_object_type: TABLE
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: ods_email_interaction
+        expect_object_type: TABLE
+        columns:
+          - { name: email_ref, type: STRING }
+      - table: ods_survey_response
+        expect_object_type: TABLE
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: ods_qa_evaluation
+        expect_object_type: TABLE
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: ods_interaction
+        expect_object_type: TABLE
+        columns:
+          - { name: interaction_id, type: STRING }
+      - table: ods_dialer_attempt
+        expect_object_type: TABLE
+        columns:
+          - { name: attempt_id, type: STRING }
+      - table: ods_timesheet
+        expect_object_type: TABLE
+        columns:
+          - { name: timesheet_id, type: INT64 }
+      - table: ods_payroll_adjustment
+        expect_object_type: TABLE
+        columns:
+          - { name: adjustment_id, type: INT64 }
+      - table: ods_sla_credit
+        expect_object_type: TABLE
+        columns:
+          - { name: sla_credit_id, type: INT64 }
+      - table: ods_callback_request
+        expect_object_type: TABLE
+        columns:
+          - { name: callback_id, type: INT64 }
+      - table: ods_shift_swap
+        expect_object_type: TABLE
+        columns:
+          - { name: swap_id, type: INT64 }
+      - table: ods_ticket_worklog
+        expect_object_type: TABLE
+        columns:
+          - { name: worklog_id, type: INT64 }
+      - table: ods_attrition_event
+        expect_object_type: TABLE
+        columns:
+          - { name: attrition_event_id, type: INT64 }
+      - table: ods_rate_card
+        expect_object_type: TABLE
+        columns:
+          - { name: rate_card_id, type: INT64 }
+      - table: ods_agent_scd2
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_history_id, type: STRING }
+      - table: ods_agent_skill_scd2
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_skill_history_id, type: STRING }
+      - table: ods_agent_assignment_scd2
+        expect_object_type: TABLE
+        columns:
+          - { name: assignment_history_id, type: STRING }
+      - table: ods_client_acid
+        expect_object_type: TABLE
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: ods_agent_acid
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_id, type: INT64 }
+      - table: ods_ticket_acid
+        expect_object_type: TABLE
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: ods_invoice_acid
+        expect_object_type: TABLE
+        columns:
+          - { name: invoice_id, type: INT64 }
+
+  # dm: 25 tables — expect_table_count guards against any of the
+  # 15 dm view names being silently created as BASE TABLE.
+  - pattern: schema_conformance
+    id: ac3-dm-object-type
+    target_dataset: dmt_build_dm
+    expect_table_count: 25
+    tables:
+      - table: dim_date
+        expect_object_type: TABLE
+        columns:
+          - { name: date_key, type: INT64 }
+      - table: dim_agent
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: dim_client
+        expect_object_type: TABLE
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: dim_program
+        expect_object_type: TABLE
+        columns:
+          - { name: program_sk, type: INT64 }
+      - table: dim_queue
+        expect_object_type: TABLE
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: dim_site
+        expect_object_type: TABLE
+        columns:
+          - { name: site_sk, type: INT64 }
+      - table: dim_shift
+        expect_object_type: TABLE
+        columns:
+          - { name: shift_sk, type: INT64 }
+      - table: dim_org
+        expect_object_type: TABLE
+        columns:
+          - { name: org_sk, type: INT64 }
+      - table: dim_disposition
+        expect_object_type: TABLE
+        columns:
+          - { name: disposition_sk, type: INT64 }
+      - table: fact_interaction
+        expect_object_type: TABLE
+        columns:
+          - { name: interaction_id, type: STRING }
+      - table: fact_agent_activity
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: fact_queue_interval
+        expect_object_type: TABLE
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: fact_csat_survey
+        expect_object_type: TABLE
+        columns:
+          - { name: survey_id, type: STRING }
+      - table: fact_qa_evaluation
+        expect_object_type: TABLE
+        columns:
+          - { name: qa_form_id, type: STRING }
+      - table: fact_billing_line
+        expect_object_type: TABLE
+        columns:
+          - { name: invoice_line_id, type: INT64 }
+      - table: fact_adherence_daily
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: fact_ticket
+        expect_object_type: TABLE
+        columns:
+          - { name: ticket_id, type: INT64 }
+      - table: fact_ivr_path
+        expect_object_type: TABLE
+        columns:
+          - { name: session_ref, type: STRING }
+      - table: agg_agent_daily
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: agg_agent_weekly
+        expect_object_type: TABLE
+        columns:
+          - { name: agent_sk, type: INT64 }
+      - table: agg_program_monthly
+        expect_object_type: TABLE
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_queue_hourly
+        expect_object_type: TABLE
+        columns:
+          - { name: queue_sk, type: INT64 }
+      - table: agg_csat_rollup_monthly
+        expect_object_type: TABLE
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_billing_monthly
+        expect_object_type: TABLE
+        columns:
+          - { name: client_sk, type: INT64 }
+      - table: agg_site_daily
+        expect_object_type: TABLE
+        columns:
+          - { name: site_code, type: STRING }
