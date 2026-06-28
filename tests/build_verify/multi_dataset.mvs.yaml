@@ -1,0 +1,41 @@
+# Multi-dataset build-and-verify golden: a VIEW in one build dataset reads a TABLE in ANOTHER,
+# using the view's PRODUCTION ref (`ods.org_unit`). `dataset_map` remaps that ref to the sandbox
+# build dataset (`dmt_build_ods`) at build time, so the cross-dataset view resolves WITHOUT the
+# harness ever owning a real-named dataset (the _guard only allows dmt_build*). Both build
+# datasets are provisioned, applied, verified, and torn down. Must PASS.
+name: multi_dataset_cross_view
+connections:
+  target: { engine: bigquery }
+
+migration:
+  dataset_map:
+    ods: dmt_build_ods
+    dm:  dmt_build_dm
+  steps:
+    # ODS layer table -> dmt_build_ods
+    - kind: ddl
+      dataset: dmt_build_ods
+      sql_text: |
+        CREATE OR REPLACE TABLE org_unit AS
+        SELECT * FROM UNNEST([
+          STRUCT(1 AS org_unit_id, 'Root' AS unit_name),
+          STRUCT(2,                'Region')
+        ]);
+    # DM layer view -> dmt_build_dm, reading the ODS table by its PRODUCTION ref `ods.org_unit`
+    # (the harness remaps `ods.` -> `dmt_build_ods.` before applying).
+    - kind: ddl
+      dataset: dmt_build_dm
+      sql_text: |
+        CREATE OR REPLACE VIEW vw_org AS
+        SELECT org_unit_id, unit_name FROM ods.org_unit;
+
+suites:
+  - pattern: schema_conformance
+    id: cross-dataset-view-built
+    target_dataset: dmt_build_dm
+    tables:
+      - table: vw_org
+        expect_object_type: VIEW
+        columns:
+          - { name: org_unit_id, type: INT64 }
+          - { name: unit_name,   type: STRING }
