@@ -1,0 +1,360 @@
+# AC5: Cross-dataset FK↔PK type consistency on every documented join path
+# All surrogate-key, natural-key, and cross-layer join columns have matching
+# INT64↔INT64 or STRING↔STRING types across the 3 datasets, preventing
+# implicit type coercion on joins.
+# Pattern: schema_conformance (multi-dataset, target-only)
+# Pass rule: all documented FK↔PK join paths type-consistent across 3 datasets,
+#   0 type-coercion risks.
+name: ac5_fk_type_consistency
+
+connections:
+  source: { engine: impala }
+  target: { engine: bigquery }
+
+migration:
+  dataset_map:
+    nbcs_staging: dmt_build_staging
+    nbcs_ods: dmt_build_ods
+    nbcs_dm: dmt_build_dm
+  steps:
+    - { kind: ddl, dataset: dmt_build_staging, sql: ddl/nbcs_staging.sql }
+    - { kind: ddl, dataset: dmt_build_ods,     sql: ddl/nbcs_ods.sql }
+    - { kind: ddl, dataset: dmt_build_dm,      sql: ddl/nbcs_dm.sql }
+
+suites:
+
+  # Staging: natural-key FK columns that join to ODS/DM
+  - pattern: schema_conformance
+    id: ac5-staging-fk-columns
+    target_dataset: dmt_build_staging
+    tables:
+      - table: stg_crm_client
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: stg_crm_client_contact
+        columns:
+          - { name: contact_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+      - table: stg_crm_program
+        columns:
+          - { name: program_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+      - table: stg_crm_contract
+        columns:
+          - { name: contract_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: stg_crm_contract_line
+        columns:
+          - { name: contract_line_id, type: INT64 }
+          - { name: contract_id, type: INT64 }
+      - table: stg_crm_sla_target
+        columns:
+          - { name: sla_target_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+      - table: stg_hr_agent
+        columns:
+          - { name: agent_id, type: INT64 }
+          - { name: org_unit_id, type: INT64 }
+      - table: stg_hr_org_unit
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: stg_hr_employment_event
+        columns:
+          - { name: event_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+      - table: stg_hr_skill
+        columns:
+          - { name: skill_id, type: INT64 }
+      - table: stg_hr_agent_skill
+        columns:
+          - { name: agent_skill_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: skill_id, type: INT64 }
+      - table: stg_wfm_schedule
+        columns:
+          - { name: schedule_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: shift_id, type: INT64 }
+      - table: stg_tel_call
+        columns:
+          - { name: call_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: stg_tel_queue
+        columns:
+          - { name: queue_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: stg_tkt_ticket
+        columns:
+          - { name: ticket_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: category_id, type: INT64 }
+          - { name: interaction_ref, type: STRING }
+      - table: stg_tkt_ticket_event
+        columns:
+          - { name: ticket_event_id, type: INT64 }
+          - { name: ticket_id, type: INT64 }
+      - table: stg_tkt_category
+        columns:
+          - { name: category_id, type: INT64 }
+      - table: stg_fin_invoice
+        columns:
+          - { name: invoice_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: stg_fin_invoice_line
+        columns:
+          - { name: invoice_line_id, type: INT64 }
+          - { name: invoice_id, type: INT64 }
+          - { name: contract_line_id, type: INT64 }
+      - table: stg_fin_rate_card
+        columns:
+          - { name: rate_card_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: stg_file_interaction_export
+        columns:
+          - { name: interaction_ref, type: STRING }
+      - table: stg_file_survey_csat
+        columns:
+          - { name: survey_id, type: STRING }
+          - { name: interaction_ref, type: STRING }
+      - table: stg_file_chat_transcripts
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: stg_file_ivr_logs
+        columns:
+          - { name: session_ref, type: STRING }
+
+  # ODS: PK/FK columns that join from staging and to DM
+  - pattern: schema_conformance
+    id: ac5-ods-pk-fk-columns
+    target_dataset: dmt_build_ods
+    tables:
+      - table: ods_program
+        columns:
+          - { name: program_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+      - table: ods_contract
+        columns:
+          - { name: contract_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: ods_contract_line
+        columns:
+          - { name: contract_line_id, type: INT64 }
+          - { name: contract_id, type: INT64 }
+      - table: ods_org_unit
+        columns:
+          - { name: org_unit_id, type: INT64 }
+      - table: ods_queue
+        columns:
+          - { name: queue_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: ods_schedule
+        columns:
+          - { name: schedule_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: shift_id, type: INT64 }
+      - table: ods_call
+        columns:
+          - { name: call_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: ods_interaction
+        columns:
+          - { name: interaction_id, type: STRING }
+          - { name: program_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: customer_ref, type: STRING }
+      - table: ods_ivr_session
+        columns:
+          - { name: session_ref, type: STRING }
+      - table: ods_chat_session
+        columns:
+          - { name: chat_ref, type: STRING }
+      - table: ods_survey_response
+        columns:
+          - { name: survey_id, type: STRING }
+          - { name: interaction_ref, type: STRING }
+      - table: ods_agent_scd2
+        columns:
+          - { name: agent_id, type: INT64 }
+          - { name: org_unit_id, type: INT64 }
+      - table: ods_agent_skill_scd2
+        columns:
+          - { name: agent_id, type: INT64 }
+          - { name: skill_id, type: INT64 }
+      - table: ods_agent_assignment_scd2
+        columns:
+          - { name: agent_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+      - table: ods_client_acid
+        columns:
+          - { name: client_id, type: INT64 }
+      - table: ods_agent_acid
+        columns:
+          - { name: agent_id, type: INT64 }
+          - { name: org_unit_id, type: INT64 }
+      - table: ods_ticket_acid
+        columns:
+          - { name: ticket_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: category_id, type: INT64 }
+          - { name: assigned_agent_id, type: INT64 }
+      - table: ods_invoice_acid
+        columns:
+          - { name: invoice_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: ods_timesheet
+        columns:
+          - { name: timesheet_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: ods_sla_credit
+        columns:
+          - { name: sla_credit_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: sla_target_id, type: INT64 }
+      - table: ods_callback_request
+        columns:
+          - { name: callback_id, type: INT64 }
+          - { name: call_id, type: INT64 }
+          - { name: queue_id, type: INT64 }
+      - table: ods_ticket_worklog
+        columns:
+          - { name: worklog_id, type: INT64 }
+          - { name: ticket_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+      - table: ods_attrition_event
+        columns:
+          - { name: attrition_event_id, type: INT64 }
+          - { name: agent_id, type: INT64 }
+      - table: ods_rate_card
+        columns:
+          - { name: rate_card_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+
+  # DM: surrogate-key dimensions + FK columns on facts/aggs
+  - pattern: schema_conformance
+    id: ac5-dm-sk-fk-columns
+    target_dataset: dmt_build_dm
+    tables:
+      - table: dim_date
+        columns:
+          - { name: date_key, type: INT64 }
+      - table: dim_agent
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: agent_id, type: INT64 }
+      - table: dim_client
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: client_id, type: INT64 }
+      - table: dim_program
+        columns:
+          - { name: program_sk, type: INT64 }
+          - { name: program_id, type: INT64 }
+          - { name: client_id, type: INT64 }
+      - table: dim_queue
+        columns:
+          - { name: queue_sk, type: INT64 }
+          - { name: queue_id, type: INT64 }
+          - { name: program_id, type: INT64 }
+      - table: dim_site
+        columns:
+          - { name: site_sk, type: INT64 }
+      - table: dim_shift
+        columns:
+          - { name: shift_sk, type: INT64 }
+          - { name: shift_id, type: INT64 }
+      - table: dim_org
+        columns:
+          - { name: org_sk, type: INT64 }
+          - { name: org_unit_id, type: INT64 }
+      - table: dim_disposition
+        columns:
+          - { name: disposition_sk, type: INT64 }
+      - table: fact_interaction
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+          - { name: queue_sk, type: INT64 }
+          - { name: agent_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+          - { name: interaction_id, type: STRING }
+          - { name: customer_ref, type: STRING }
+      - table: fact_agent_activity
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: fact_queue_interval
+        columns:
+          - { name: queue_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: fact_csat_survey
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+          - { name: agent_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+          - { name: interaction_id, type: STRING }
+          - { name: survey_id, type: STRING }
+      - table: fact_qa_evaluation
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+          - { name: interaction_id, type: STRING }
+      - table: fact_billing_line
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+          - { name: invoice_id, type: INT64 }
+      - table: fact_adherence_daily
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: fact_ticket
+        columns:
+          - { name: program_sk, type: INT64 }
+          - { name: assigned_agent_sk, type: INT64 }
+          - { name: ticket_id, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: fact_ivr_path
+        columns:
+          - { name: session_ref, type: STRING }
+          - { name: date_key, type: INT64 }
+      - table: agg_agent_daily
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: agg_agent_weekly
+        columns:
+          - { name: agent_sk, type: INT64 }
+          - { name: week_start_key, type: INT64 }
+      - table: agg_program_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+      - table: agg_queue_hourly
+        columns:
+          - { name: queue_sk, type: INT64 }
+          - { name: date_key, type: INT64 }
+      - table: agg_csat_rollup_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+      - table: agg_billing_monthly
+        columns:
+          - { name: client_sk, type: INT64 }
+          - { name: program_sk, type: INT64 }
+      - table: agg_site_daily
+        columns:
+          - { name: date_key, type: INT64 }
