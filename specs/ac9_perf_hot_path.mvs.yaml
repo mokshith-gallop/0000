@@ -1,0 +1,132 @@
+# AC9: Physical-access performance on hot-path tables
+# For each hot-path table, a partition- or cluster-filtered query scans
+# materially fewer bytes than an unfiltered scan of the same table; every
+# figure from a measured run on the scratch target, not invented.
+# Pattern: query_performance (mode: compare, dry_run: true)
+# Pass rule: 5/5 hot-path tables show material byte reduction;
+#   fact_interaction filterless query rejected by require_partition_filter.
+name: ac9_perf_hot_path
+
+connections:
+  source: { engine: impala }
+  target: { engine: bigquery }
+
+migration:
+  dataset_map:
+    nbcs_staging: dmt_build_staging
+    nbcs_ods: dmt_build_ods
+    nbcs_dm: dmt_build_dm
+  steps:
+    - { kind: ddl, dataset: dmt_build_staging, sql: ddl/nbcs_staging.sql }
+    - { kind: ddl, dataset: dmt_build_ods,     sql: ddl/nbcs_ods.sql }
+    - { kind: ddl, dataset: dmt_build_dm,      sql: ddl/nbcs_dm.sql }
+
+suites:
+  - pattern: query_performance
+    id: ac9-hot-path-perf
+    queries:
+
+      # ────────────────────────────────────────────────────────
+      # 1. fact_interaction — partition + cluster pruning
+      #    A: full scan (unfiltered)
+      #    B: date_key RANGE_BUCKET + channel cluster filter
+      # ────────────────────────────────────────────────────────
+      - id: fact-interaction-prune
+        mode: compare
+        a:
+          sql: "SELECT * FROM dmt_build_dm.fact_interaction WHERE date_key BETWEEN 20200101 AND 20301231"
+          dry_run: true
+        b:
+          sql: >
+            SELECT * FROM dmt_build_dm.fact_interaction
+            WHERE date_key BETWEEN 20260101 AND 20260131
+            AND channel = 'VOICE'
+          dry_run: true
+        compare:
+          bytes_scanned: "b <= a"
+
+      # ────────────────────────────────────────────────────────
+      # 2. fact_interaction — require_partition_filter rejection
+      #    A filterless query MUST be rejected (require_partition_filter=true).
+      #    mode: assert with expect_error to confirm BigQuery rejects it.
+      # ────────────────────────────────────────────────────────
+      - id: fact-interaction-require-filter
+        mode: assert
+        sql: "SELECT * FROM dmt_build_dm.fact_interaction LIMIT 1"
+        expect_error: true
+
+      # ────────────────────────────────────────────────────────
+      # 3. agg_agent_daily — partition + cluster pruning
+      #    A: full scan
+      #    B: date_key partition + agent_sk, site_code cluster filters
+      # ────────────────────────────────────────────────────────
+      - id: agg-agent-daily-prune
+        mode: compare
+        a:
+          sql: "SELECT * FROM dmt_build_dm.agg_agent_daily WHERE date_key BETWEEN 20200101 AND 20301231"
+          dry_run: true
+        b:
+          sql: >
+            SELECT * FROM dmt_build_dm.agg_agent_daily
+            WHERE date_key BETWEEN 20260101 AND 20260131
+            AND agent_sk = 1 AND site_code = 'NYC'
+          dry_run: true
+        compare:
+          bytes_scanned: "b <= a"
+
+      # ────────────────────────────────────────────────────────
+      # 4. agg_queue_hourly — partition + cluster pruning
+      #    A: full scan
+      #    B: date_key partition + queue_sk cluster filter
+      # ────────────────────────────────────────────────────────
+      - id: agg-queue-hourly-prune
+        mode: compare
+        a:
+          sql: "SELECT * FROM dmt_build_dm.agg_queue_hourly WHERE date_key BETWEEN 20200101 AND 20301231"
+          dry_run: true
+        b:
+          sql: >
+            SELECT * FROM dmt_build_dm.agg_queue_hourly
+            WHERE date_key BETWEEN 20260101 AND 20260131
+            AND queue_sk = 1
+          dry_run: true
+        compare:
+          bytes_scanned: "b <= a"
+
+      # ────────────────────────────────────────────────────────
+      # 5. fact_billing_line — DATE partition + cluster pruning
+      #    A: full scan
+      #    B: period_month partition + client_sk, program_sk cluster filters
+      # ────────────────────────────────────────────────────────
+      - id: fact-billing-line-prune
+        mode: compare
+        a:
+          sql: "SELECT * FROM dmt_build_dm.fact_billing_line"
+          dry_run: true
+        b:
+          sql: >
+            SELECT * FROM dmt_build_dm.fact_billing_line
+            WHERE period_month = DATE '2026-06-01'
+            AND client_sk = 1 AND program_sk = 1
+          dry_run: true
+        compare:
+          bytes_scanned: "b <= a"
+
+      # ────────────────────────────────────────────────────────
+      # 6. fact_queue_interval — partition + cluster pruning
+      #    A: full scan
+      #    B: date_key partition + queue_sk cluster filter
+      # ────────────────────────────────────────────────────────
+      - id: fact-queue-interval-prune
+        mode: compare
+        a:
+          sql: "SELECT * FROM dmt_build_dm.fact_queue_interval WHERE date_key BETWEEN 20200101 AND 20301231"
+          dry_run: true
+        b:
+          sql: >
+            SELECT * FROM dmt_build_dm.fact_queue_interval
+            WHERE date_key BETWEEN 20260101 AND 20260131
+            AND queue_sk = 1
+          dry_run: true
+        compare:
+          bytes_scanned: "b <= a"
